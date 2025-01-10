@@ -4,9 +4,9 @@ var score = 0
 var lives = 3
 
 var double_jump_unlocked = false
-var grapple_unlocked = true
-var reeling_unlocked = true
-var swinging_unlocked = true
+var grapple_unlocked = false
+var reeling_unlocked = false
+var swinging_unlocked = false
 var max_web_range = 70
 
 @onready var ui: CanvasLayer = %UI
