@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://dfb500b8blmt3"]
+
+[ext_resource type="Script" path="res://scripts/aim.gd" id="1_ups4o"]
+[ext_resource type="Texture2D" uid="uid://c5tpjwrvro7h1" path="res://assets/sprites/aim.png" id="1_ye3ko"]
+
+[node name="Aim" type="Node2D"]
+script = ExtResource("1_ups4o")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+rotation = 1.5708
+texture = ExtResource("1_ye3ko")
