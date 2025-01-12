@@ -80,6 +80,7 @@ func _physics_process(delta: float) -> void:
 			print("Not Swinging")
 			swinging = false
 			reeling_in = false
+			reeling_out = false
 			var grapple = get_parent().get_node("grapple")
 			grapple.queue_free()
 		
@@ -213,7 +214,7 @@ func _physics_process(delta: float) -> void:
 				print("Velocity x nomalized is: " + str(velocity.normalized().x))
 				print("Amplitude is: " + str(amp))
 				print("Scale factor is " + str(max(PI/3 * abs(velocity.normalized().x)/0.6,PI/3 * abs(velocity.normalized().y)/0.9)))
-				swing_speed = max(1.2 * max(PI/3 * abs(velocity.normalized().x)/0.3,PI/3 * abs(velocity.normalized().y)/0.5),2.2)
+				swing_speed = max(1.5 * max(PI/3 * abs(velocity.normalized().x)/0.3,PI/3 * abs(velocity.normalized().y)/0.5),3.2)
 				print("Swing speed is: " + str(swing_speed))
 				if origin.x < position.x:
 					forward = false
