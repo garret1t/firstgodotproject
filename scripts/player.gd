@@ -2,8 +2,8 @@ extends CharacterBody2D
 
 @onready var game: Node = %GameManager
 
-const SPEED = 130.0
-const JUMP_VELOCITY = -300.0
+const SPEED = 230.0
+const JUMP_VELOCITY = -400.0
 
 var theta:float = 0.0
 
