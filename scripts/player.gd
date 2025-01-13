@@ -4,17 +4,27 @@ extends CharacterBody2D
 
 const SPEED = 230.0
 const JUMP_VELOCITY = -400.0
+const SHOOT_SPEED = 600.0
 
-var theta:float = 0.0
 
-var origin:Vector2 = Vector2(0,0)
 @export var freq:float = 1.0
 @export_range(0,PI/3) var amp:float = 0.0
 @export var swing_speed:float = 3.0
 @export var reel_speed:float = 100.0
+
+var theta:float = 0.0
+var origin:Vector2 = Vector2(0,0)
+
 var grapple_instance:Node
 var web_length = 48
+
+var fired:bool = false
+
 var swinging:bool = false
+
+var unattached:bool = false
+var unattached_frames:int = 0
+
 var forward = true
 
 var jumps = 1
@@ -25,6 +35,7 @@ var reeling_out:bool = false
 
 func _physics_process(delta: float) -> void:
 	#print("Jumps: " + str(jumps))
+	
 	if swinging:
 		if game.swinging_unlocked:
 			var swing_direction = Input.get_axis("ui_left", "ui_right")
@@ -82,7 +93,9 @@ func _physics_process(delta: float) -> void:
 			reeling_in = false
 			reeling_out = false
 			var grapple = get_parent().get_node("grapple")
-			grapple.queue_free()
+			if(grapple):
+				grapple.queue_free()
+			unattached = true
 		
 		if game.reeling_unlocked:
 			if Input.is_action_just_pressed("ui_reel") and not reeling_in:
@@ -127,9 +140,38 @@ func _physics_process(delta: float) -> void:
 			reeling_in=false
 			var grapple = get_parent().get_node("grapple")
 			grapple.queue_free()
+			unattached = true
 		
 	else:
+		
 		# Add the gravity.
+		if fired:
+			if (position.distance_to(grapple_instance.position) > game.max_web_range):
+				print("range exceeded")
+				fired = false
+				$BulletTimer.stop()
+				var grapple = get_parent().get_node("grapple")
+				grapple.queue_free()
+				
+			if grapple_instance.sleeping:
+				amp = max(max(PI/3 * abs(velocity.normalized().x)/0.6,PI/3 * abs(velocity.normalized().y)/0.9), PI/4)
+				print("Velocity x nomalized is: " + str(velocity.normalized().x))
+				print("Amplitude is: " + str(amp))
+				print("Scale factor is " + str(max(PI/3 * abs(velocity.normalized().x)/0.6,PI/3 * abs(velocity.normalized().y)/0.9)))
+				swing_speed = max(1.5 * max(PI/3 * abs(velocity.normalized().x)/0.3,PI/3 * abs(velocity.normalized().y)/0.5),3.2)
+				print("Swing speed is: " + str(swing_speed))
+				web_length = origin.distance_to(position) * 1.1
+				if origin.x < position.x:
+					forward = false
+					theta = amp
+					theta = amp/2
+				if origin.x > position.x:
+					forward = true
+					theta = -amp
+					theta = -amp/2
+				fired = false
+				swinging = true
+				$BulletTimer.stop()
 		if not is_on_floor():
 			velocity += get_gravity() * delta
 			animated_sprite_2d.play("jump")
@@ -145,152 +187,52 @@ func _physics_process(delta: float) -> void:
 		
 		
 		if (Input.is_action_just_pressed("ui_swing") and not swinging) and game.grapple_unlocked:
-			origin = get_global_mouse_position()
-			var map = get_parent().get_node("TileMap")
-			var origin_tile_coords = map.local_to_map(origin)
-			var attached_tile = map.get_cell_tile_data(origin_tile_coords)
+			
 			jumps = 1
 			if game.double_jump_unlocked:
 				jumps = 2
-			print(str(origin_tile_coords))
-			print(str(attached_tile))
-			var attached = false
-			if attached_tile:
-				attached = attached_tile.get_collision_polygons_count(0) > 0
-				print(str(attached))
-			else:
-				if position.x > origin.x:
-					attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(1,0))
-					if attached_tile:
-						attached = attached_tile.get_collision_polygons_count(0) > 0	
-					if attached:
-						origin = map.map_to_local(origin_tile_coords-Vector2i(1,0))
-					else:
-						attached_tile = map.get_cell_tile_data(origin_tile_coords+Vector2i(1,0))
-						if attached_tile:
-							attached = attached_tile.get_collision_polygons_count(0) > 0	
-						if attached:
-							origin = map.map_to_local(origin_tile_coords+Vector2i(1,0))
-						else:
-							attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(0,1))
-							if attached_tile:
-								attached = attached_tile.get_collision_polygons_count(0) > 0	
-							if attached:
-								origin = map.map_to_local(origin_tile_coords-Vector2i(0,1))
-				else:
-					attached_tile = map.get_cell_tile_data(origin_tile_coords+Vector2i(1,0))
-					if attached_tile:
-						attached = attached_tile.get_collision_polygons_count(0) > 0	
-					if attached:
-						origin = map.map_to_local(origin_tile_coords+Vector2i(1,0))
-					else:
-						attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(1,0))
-						if attached_tile:
-							attached = attached_tile.get_collision_polygons_count(0) > 0	
-						if attached:
-							origin = map.map_to_local(origin_tile_coords-Vector2i(1,0))
-						else:
-							attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(0,1))
-							if attached_tile:
-								attached = attached_tile.get_collision_polygons_count(0) > 0	
-							if attached:
-								origin = map.map_to_local(origin_tile_coords-Vector2i(0,1))
-			if origin.distance_to(position) > game.max_web_range or not attached:
-				pass
-			else:
-				web_length = origin.distance_to(position) * 1.1
-				print("Swinging")
-				swinging = true
-				#velocity.y = 0
-				#velocity.x = 0
-				
-				print("around " + str(origin))
-				var grapple_point_packed = load("res://scenes/grapple_point.tscn")
-				grapple_instance = grapple_point_packed.instantiate()
-				grapple_instance.set_name("grapple")
-				add_sibling(grapple_instance)
-				grapple_instance.position = origin
-				amp = max(max(PI/3 * abs(velocity.normalized().x)/0.6,PI/3 * abs(velocity.normalized().y)/0.9), PI/4)
-				print("Velocity x nomalized is: " + str(velocity.normalized().x))
-				print("Amplitude is: " + str(amp))
-				print("Scale factor is " + str(max(PI/3 * abs(velocity.normalized().x)/0.6,PI/3 * abs(velocity.normalized().y)/0.9)))
-				swing_speed = max(1.5 * max(PI/3 * abs(velocity.normalized().x)/0.3,PI/3 * abs(velocity.normalized().y)/0.5),3.2)
-				print("Swing speed is: " + str(swing_speed))
-				if origin.x < position.x:
-					forward = false
-					theta = amp
-				if origin.x > position.x:
-					forward = true
-					theta = -amp
+			
+			
+			
+			#velocity.y = 0
+			#velocity.x = 0
+			origin = get_global_mouse_position()
+			print("around " + str(origin))
+			var grapple_point_packed = load("res://scenes/grapple_point.tscn")
+			grapple_instance = grapple_point_packed.instantiate()
+			grapple_instance.set_name("grapple")
+			add_sibling(grapple_instance)
+			grapple_instance.position = position
+			grapple_instance.apply_impulse((origin-position).normalized()*SHOOT_SPEED)
+			print("Fired")
+			fired = true
+			$BulletTimer.start()
+			print("Timer Started")
+			
+			
 				
 		
 		if (Input.is_action_just_pressed("ui_reel") and not swinging) and game.reeling_unlocked:
-			origin = get_global_mouse_position()
-			var map = get_parent().get_node("TileMap")
-			var origin_tile_coords = map.local_to_map(origin)
-			var attached_tile = map.get_cell_tile_data(origin_tile_coords)
+			
 			jumps = 1
 			if game.double_jump_unlocked:
 				jumps = 2
-			print(str(origin_tile_coords))
-			print(str(attached_tile))
-			var attached = false
-			if attached_tile:
-				attached = attached_tile.get_collision_polygons_count(0) > 0
-				print(str(attached))
-			else:
-				if position.x > origin.x:
-					attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(1,0))
-					if attached_tile:
-						attached = attached_tile.get_collision_polygons_count(0) > 0	
-					if attached:
-						origin = map.map_to_local(origin_tile_coords-Vector2i(1,0))
-					else:
-						attached_tile = map.get_cell_tile_data(origin_tile_coords+Vector2i(1,0))
-						if attached_tile:
-							attached = attached_tile.get_collision_polygons_count(0) > 0	
-						if attached:
-							origin = map.map_to_local(origin_tile_coords+Vector2i(1,0))
-						else:
-							attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(0,1))
-							if attached_tile:
-								attached = attached_tile.get_collision_polygons_count(0) > 0	
-							if attached:
-								origin = map.map_to_local(origin_tile_coords-Vector2i(0,1))
-				else:
-					attached_tile = map.get_cell_tile_data(origin_tile_coords+Vector2i(1,0))
-					if attached_tile:
-						attached = attached_tile.get_collision_polygons_count(0) > 0	
-					if attached:
-						origin = map.map_to_local(origin_tile_coords+Vector2i(1,0))
-					else:
-						attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(1,0))
-						if attached_tile:
-							attached = attached_tile.get_collision_polygons_count(0) > 0	
-						if attached:
-							origin = map.map_to_local(origin_tile_coords-Vector2i(1,0))
-						else:
-							attached_tile = map.get_cell_tile_data(origin_tile_coords-Vector2i(0,1))
-							if attached_tile:
-								attached = attached_tile.get_collision_polygons_count(0) > 0	
-							if attached:
-								origin = map.map_to_local(origin_tile_coords-Vector2i(0,1))
-			if origin.distance_to(position) > game.max_web_range or not attached:
-				pass
-			else:
-				web_length = origin.distance_to(position) * 1.1
-				print("Reeling")
-				swinging = true
-				reeling_in = true
-				#velocity.y = 0
-				#velocity.x = 0
-				
-				print("toward " + str(origin))
-				var grapple_point_packed = load("res://scenes/grapple_point.tscn")
-				grapple_instance = grapple_point_packed.instantiate()
-				grapple_instance.set_name("grapple")
-				add_sibling(grapple_instance)
-				grapple_instance.position = origin
+			
+			
+			
+			web_length = origin.distance_to(position) * 1.1
+			print("Reeling")
+			swinging = true
+			reeling_in = true
+			#velocity.y = 0
+			#velocity.x = 0
+			
+			print("toward " + str(origin))
+			var grapple_point_packed = load("res://scenes/grapple_point.tscn")
+			grapple_instance = grapple_point_packed.instantiate()
+			grapple_instance.set_name("grapple")
+			add_sibling(grapple_instance)
+			grapple_instance.position = origin
 				
 	# Get the input direction and handle the movement/deceleration.
 	# As good practice, you should replace UI actions with custom gameplay actions.
@@ -305,10 +247,28 @@ func _physics_process(delta: float) -> void:
 			animated_sprite_2d.play("idle")
 		else:
 			animated_sprite_2d.play("run")
-			
-		if direction:
-			velocity.x = direction * SPEED
-		else:
-			velocity.x = move_toward(velocity.x, 0, SPEED)
-
+		
+		if not unattached:	
+			if direction:
+				velocity.x = direction * SPEED
+			else:
+				if is_on_floor():
+					velocity.x = move_toward(velocity.x, 0, SPEED)
+		else :
+			velocity.x = get_real_velocity().x * 1.01
+			if unattached_frames > 10:
+				unattached = false
+				unattached_frames = 0
+				print("no longer uattached")
+			else:
+				unattached_frames+=1
 	move_and_slide()
+
+
+func _on_bullet_timer_timeout() -> void:
+	print("Timeout")
+	fired = false
+	$BulletTimer.stop()
+	var grapple = get_parent().get_node("grapple")
+	grapple.queue_free()
+	

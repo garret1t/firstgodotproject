@@ -7,7 +7,7 @@ var double_jump_unlocked = true
 var grapple_unlocked = true
 var reeling_unlocked = true
 var swinging_unlocked = true
-var max_web_range = 120
+var max_web_range = 160
 
 @onready var ui: CanvasLayer = %UI
 @onready var score_label: Label = %ScoreLabel

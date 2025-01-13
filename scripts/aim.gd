@@ -17,7 +17,7 @@ func _process(_delta: float) -> void:
 	direction = direction.normalized()
 	
 	# Scale the direction by 64 to set the sprite position
-	var target_position = direction * (game_manager.max_web_range - 4)
+	var target_position = direction * (game_manager.max_web_range - 14)
 	
 	# Set the sprite's position (assuming the sprite is a child of this node)
 	position = target_position

@@ -1,12 +1,36 @@
-[gd_scene load_steps=3 format=3 uid="uid://csnjlwmtp228t"]
+[gd_scene load_steps=5 format=3 uid="uid://csnjlwmtp228t"]
 
 [ext_resource type="Texture2D" uid="uid://den3eahualij4" path="res://assets/sprites/fruit.png" id="1_se2h3"]
-[ext_resource type="Script" path="res://scenes/grapple_point.gd" id="2_86it3"]
+[ext_resource type="Script" path="res://scripts/grapple_point.gd" id="2_86it3"]
 
-[node name="GrapplePoint" type="Sprite2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_3sc0i"]
+radius = 4.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_7b6lg"]
+radius = 4.0
+
+[node name="RigidBody2D" type="RigidBody2D"]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("2_86it3")
+
+[node name="GrapplePoint" type="Sprite2D" parent="."]
 texture = ExtResource("1_se2h3")
 region_enabled = true
 region_rect = Rect2(0, 0, 16, 16)
-script = ExtResource("2_86it3")
 
-[connection signal="ready" from="." to="." method="_on_ready"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("CircleShape2D_3sc0i")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0, 2)
+shape = SubResource("CircleShape2D_7b6lg")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_shape_entered" from="." to="." method="_on_body_shape_entered"]
+[connection signal="ready" from="GrapplePoint" to="GrapplePoint" method="_on_ready"]
+[connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]
+[connection signal="body_shape_entered" from="Area2D" to="." method="_on_area_2d_body_shape_entered"]

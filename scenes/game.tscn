@@ -2077,7 +2077,8 @@ texture_region_size = Vector2i(32, 32)
 
 [sub_resource type="TileSet" id="TileSet_lhe3c"]
 tile_size = Vector2i(32, 32)
-physics_layer_0/collision_layer = 1
+physics_layer_0/collision_layer = 3
+physics_layer_0/collision_mask = 3
 sources/0 = SubResource("TileSetAtlasSource_oksoo")
 sources/1 = SubResource("TileSetAtlasSource_mbkcd")
 pattern_0 = SubResource("TileMapPattern_5l5jy")
@@ -2108,6 +2109,11 @@ amp = 1.047
 zoom = Vector2(2, 2)
 limit_bottom = 160
 position_smoothing_enabled = true
+
+[node name="BulletTimer" type="Timer" parent="Player"]
+process_callback = 0
+wait_time = 0.3
+one_shot = true
 
 [node name="Coins" type="Node" parent="."]
 
@@ -2150,3 +2156,5 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "Score: 0"
 label_settings = SubResource("LabelSettings_btdl2")
+
+[connection signal="timeout" from="Player/BulletTimer" to="Player" method="_on_bullet_timer_timeout"]
